@@ -25,7 +25,7 @@ import smbus
 from .values import *
 
 
-class APDS9930_I2C_Base(object):
+class APDS9930_I2C_Base():
     """
     Base class for APDS9930 that provides basic I2C communication
     methods, specifically adapted for this device.
@@ -407,7 +407,7 @@ class APDS9930(APDS9930_I2C_Base):
         ======== ============== ============================================
         """
         reg_val = self.read_byte_data(APDS9930_CONTROL)
-        v = (reg_val >> 6) & 3     # 3 = 00000011
+        v = (reg_val >> 6) & 3  # 3 = 00000011
 
         return DictReprInt(v, mapping={0: "LED_DRIVE_100MA",
                                        1: "LED_DRIVE_50MA",
@@ -418,7 +418,7 @@ class APDS9930(APDS9930_I2C_Base):
     def led_drive(self, value):
         reg_val = self.read_byte_data(APDS9930_CONTROL)
 
-        value &= 3                # 3 = 00000011
+        value &= 3  # 3 = 00000011
         value = value << 6
         reg_val &= int("00111111", 2)
         reg_val |= value
@@ -624,9 +624,9 @@ class BinInt(int):
     def __init__(self, n, base=10, byte=False):
         self.byte = byte
         if type(n) == int:
-            return super(BinInt, self).__init__(n)
+            return super(BinInt).__init__(int, n)
         else:
-            return super(BinInt, self).__init__(n, base)
+            return super(BinInt).__init__(int, n, base)
 
     def __new__(cls, n, base=10, byte=False):
         if type(n) == int:
@@ -653,9 +653,9 @@ class DictReprInt(int):
     def __init__(self, n, base=10, mapping={}):
         self.mapping = mapping
         if type(n) == int:
-            return super(DictReprInt, self).__init__(n)
+            return super(DictReprInt).__init__(int, n)
         else:
-            return super(DictReprInt, self).__init__(n, base)
+            return super(DictReprInt).__init__(int, n, base)
 
     def __new__(cls, n, base=10, mapping={}):
         if type(n) == int:
