@@ -21,7 +21,7 @@ them on.
 
 __all__ = ("APDS9930", "regs")
 
-import smbus
+import smbus2
 from .values import *
 
 
