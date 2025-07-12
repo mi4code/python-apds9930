@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 
 """
 This module allows you to interface with an Avago APDS-9930 I2C
@@ -25,7 +24,8 @@ __all__ = ("APDS9930", "regs")
 import smbus
 from .values import *
 
-class APDS9930_I2C_Base(object):
+
+class APDS9930_I2C_Base():
     """
     Base class for APDS9930 that provides basic I2C communication
     methods, specifically adapted for this device.
@@ -74,17 +74,18 @@ class APDS9930_I2C_Base(object):
         """
         return self._bus.read_byte_data(self.address, reg | mode)
 
-    def read_block_data(self, reg, len, mode=AUTO_INCREMENT):
+    def read_block_data(self, reg, len_, mode=AUTO_INCREMENT):
         """
         Read a block with size len starting from the specified address.
         """
-        return self._bus.read_i2c_block_data(self.address, reg | mode, len)
+        return self._bus.read_i2c_block_data(self.address, reg | mode, len_)
 
     def close(self):
         """
         Close the I2C bus.
         """
         self._bus.close()
+
 
 class APDS9930(APDS9930_I2C_Base):
     """
@@ -100,7 +101,7 @@ class APDS9930(APDS9930_I2C_Base):
     def __init__(self, bus, address=APDS9930_I2C_ADDR):
         super(APDS9930, self).__init__(bus, address)
 
-        self.address = HexInt(self.address) # For aesthetic purposes only
+        self.address = HexInt(self.address)  # For aesthetic purposes only
 
         # Check device ID against preset values
         if self.id not in APDS9930_IDs:
@@ -143,6 +144,7 @@ class APDS9930(APDS9930_I2C_Base):
         and/or the specific feature methods instead.
         """
         return BinInt(self.read_byte_data(APDS9930_ENABLE), byte=True)
+
     @mode.setter
     def mode(self, value):
         self.write_byte_data(APDS9930_ENABLE, value)
@@ -188,7 +190,7 @@ class APDS9930(APDS9930_I2C_Base):
         """
         reg_val = self.mode
 
-        if mode >= 0 and mode <= 6:
+        if 0 <= mode <= 6:
             if enable:
                 reg_val |= 1 << mode
             else:
@@ -204,6 +206,7 @@ class APDS9930(APDS9930_I2C_Base):
         Turn on or off the internal oscillator (mode, boolean).
         """
         return self.get_mode(POWER)
+
     @power.setter
     def power(self, value):
         self.set_mode(POWER, value)
@@ -214,6 +217,7 @@ class APDS9930(APDS9930_I2C_Base):
         Enable or disable the ambient light sensor (mode, boolean).
         """
         return self.get_mode(AMBIENT_LIGHT)
+
     @ambient_light_sensor.setter
     def ambient_light_sensor(self, value):
         self.set_mode(AMBIENT_LIGHT, value)
@@ -224,6 +228,7 @@ class APDS9930(APDS9930_I2C_Base):
         Enable or disable the proximity sensor (mode, boolean).
         """
         return self.get_mode(PROXIMITY)
+
     @proximity_sensor.setter
     def proximity_sensor(self, value):
         self.set_mode(PROXIMITY, value)
@@ -234,6 +239,7 @@ class APDS9930(APDS9930_I2C_Base):
         Enable or disable the wait timer feature (mode, boolean).
         """
         return self.get_mode(WAIT)
+
     @wait_timer.setter
     def wait_timer(self, value):
         self.set_mode(WAIT, value)
@@ -244,6 +250,7 @@ class APDS9930(APDS9930_I2C_Base):
         Enable or disable the ambient light interrupt (mode, boolean).
         """
         return self.get_mode(AMBIENT_LIGHT_INT)
+
     @enable_ambient_light_interrupt.setter
     def enable_ambient_light_interrupt(self, value):
         self.set_mode(AMBIENT_LIGHT_INT, value)
@@ -254,6 +261,7 @@ class APDS9930(APDS9930_I2C_Base):
         Enable or disable the proximity interrupt (mode, boolean).
         """
         return self.get_mode(PROXIMITY_INT)
+
     @enable_proximity_interrupt.setter
     def enable_proximity_interrupt(self, value):
         self.set_mode(PROXIMITY_INT, value)
@@ -266,6 +274,7 @@ class APDS9930(APDS9930_I2C_Base):
         (mode, boolean).
         """
         return self.get_mode(SLEEP_AFTER_INT)
+
     @sleep_after_interrupt.setter
     def sleep_after_interrupt(self, value):
         self.set_mode(SLEEP_AFTER_INT, value)
@@ -296,7 +305,6 @@ class APDS9930(APDS9930_I2C_Base):
         self.enable_proximity_interrupt = interrupt
         self.power = True
         self.proximity_sensor = True
-
 
     @property
     def ch0_light(self):
@@ -332,9 +340,9 @@ class APDS9930(APDS9930_I2C_Base):
         in lux (according to the datasheet).
         """
 
-        ALSIT = 2.73 * (256 - DEFAULT_ATIME)
+        alsit = 2.73 * (256 - DEFAULT_ATIME)
         iac = max(ch0 - B * ch1, C * ch0 - D * ch1)
-        lpc = GA * DF / (ALSIT * self.ambient_light_gain)
+        lpc = GA * DF / (alsit * self.ambient_light_gain)
         return iac * lpc
 
     @property
@@ -356,6 +364,7 @@ class APDS9930(APDS9930_I2C_Base):
         h = self.read_byte_data(APDS9930_PILTH)
 
         return l + (h << 8)
+
     @proximity_int_low_threshold.setter
     def proximity_int_low_threshold(self, value):
         h = value >> 8
@@ -373,6 +382,7 @@ class APDS9930(APDS9930_I2C_Base):
         h = self.read_byte_data(APDS9930_PIHTH)
 
         return l + (h << 8)
+
     @proximity_int_high_threshold.setter
     def proximity_int_high_threshold(self, value):
         h = value >> 8
@@ -397,7 +407,7 @@ class APDS9930(APDS9930_I2C_Base):
         ======== ============== ============================================
         """
         reg_val = self.read_byte_data(APDS9930_CONTROL)
-        v =  (reg_val >> 6) & 3     # 3 = 00000011
+        v = (reg_val >> 6) & 3  # 3 = 00000011
 
         return DictReprInt(v, mapping={0: "LED_DRIVE_100MA",
                                        1: "LED_DRIVE_50MA",
@@ -408,7 +418,7 @@ class APDS9930(APDS9930_I2C_Base):
     def led_drive(self, value):
         reg_val = self.read_byte_data(APDS9930_CONTROL)
 
-        value &= 3                # 3 = 00000011
+        value &= 3  # 3 = 00000011
         value = value << 6
         reg_val &= int("00111111", 2)
         reg_val |= value
@@ -519,6 +529,7 @@ class APDS9930(APDS9930_I2C_Base):
         h = self.read_byte_data(APDS9930_AILTH)
 
         return l + (h << 8)
+
     @ambient_light_int_low_threshold.setter
     def ambient_light_int_low_threshold(self, value):
         h = value >> 8
@@ -536,6 +547,7 @@ class APDS9930(APDS9930_I2C_Base):
         h = self.read_byte_data(APDS9930_AIHTH)
 
         return l + (h << 8)
+
     @ambient_light_int_high_threshold.setter
     def ambient_light_int_high_threshold(self, value):
         h = value >> 8
@@ -552,6 +564,7 @@ class APDS9930(APDS9930_I2C_Base):
         """
         val = self.read_byte_data(APDS9930_STATUS)
         return bool((val >> 4) & 1)
+
     @ambient_light_interrupt.setter
     def ambient_light_interrupt(self, value):
         if not value:
@@ -565,6 +578,7 @@ class APDS9930(APDS9930_I2C_Base):
         """
         val = self.read_byte_data(APDS9930_STATUS)
         return bool((val >> 5) & 1)
+
     @proximity_interrupt.setter
     def proximity_interrupt(self, value):
         if not value:
@@ -581,14 +595,14 @@ class APDS9930(APDS9930_I2C_Base):
         Debug: read all the registers from the device and
         **print** them.
         """
-        print "   REGISTER       DECIMAL  HEXADECIMAL     BINARY"
+        print("   REGISTER       DECIMAL  HEXADECIMAL     BINARY")
         for reg in REGISTERS:
             val = self.read_byte_data(REGISTERS[reg])
-            print "{:<4}  {:>9}    dec {:<3}   hex {:<4}   bin {:08d}".format(hex(REGISTERS[reg]),
+            print("{:<4}  {:>9}    dec {:<3}   hex {:<4}   bin {:08d}".format(hex(REGISTERS[reg]),
                                                                            reg + ":",
                                                                            str(int(val)),
                                                                            hex(val),
-                                                                           int(bin(val)[2:]))
+                                                                           int(bin(val)[2:])))
 
 
 class HexInt(int):
@@ -598,6 +612,7 @@ class HexInt(int):
     def __repr__(self):
         return hex(self)
 
+
 class BinInt(int):
     """
     Integer that represents itself as a binary number.
@@ -605,12 +620,13 @@ class BinInt(int):
     so that it uses at least 8 binary digits.
     """
     byte = False
+
     def __init__(self, n, base=10, byte=False):
         self.byte = byte
         if type(n) == int:
-            return super(BinInt, self).__init__(n)
+            return super(BinInt).__init__(int, n)
         else:
-            return super(BinInt, self).__init__(n, base)
+            return super(BinInt).__init__(int, n, base)
 
     def __new__(cls, n, base=10, byte=False):
         if type(n) == int:
@@ -626,6 +642,7 @@ class BinInt(int):
         else:
             return bin(self)
 
+
 class DictReprInt(int):
     """
     Integer that represents itself with a name rather than
@@ -636,9 +653,9 @@ class DictReprInt(int):
     def __init__(self, n, base=10, mapping={}):
         self.mapping = mapping
         if type(n) == int:
-            return super(DictReprInt, self).__init__(n)
+            return super(DictReprInt).__init__(int, n)
         else:
-            return super(DictReprInt, self).__init__(n, base)
+            return super(DictReprInt).__init__(int, n, base)
 
     def __new__(cls, n, base=10, mapping={}):
         if type(n) == int:
@@ -653,6 +670,7 @@ class DictReprInt(int):
             return super(DictReprInt, self).__repr__() + " = " + self.mapping[self]
         else:
             return super(DictReprInt, self).__repr__()
+
 
 class SensorError(EnvironmentError):
     """
